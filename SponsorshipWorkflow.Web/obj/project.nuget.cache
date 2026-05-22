@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "dgSpecHash": "JtPj4n0a6rQ=",
+  "success": true,
+  "projectFilePath": "D:\\Downloads\\SponsorshipWorkflow\\SponsorshipWorkflow\\src\\SponsorshipWorkflow.Web\\SponsorshipWorkflow.Web.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\user\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.7\\microsoft.aspnetcore.app.internal.assets.10.0.7.nupkg.sha512",
+    "C:\\Users\\user\\.nuget\\packages\\microsoft.identitymodel.abstractions\\8.9.0\\microsoft.identitymodel.abstractions.8.9.0.nupkg.sha512",
+    "C:\\Users\\user\\.nuget\\packages\\microsoft.identitymodel.jsonwebtokens\\8.9.0\\microsoft.identitymodel.jsonwebtokens.8.9.0.nupkg.sha512",
+    "C:\\Users\\user\\.nuget\\packages\\microsoft.identitymodel.logging\\8.9.0\\microsoft.identitymodel.logging.8.9.0.nupkg.sha512",
+    "C:\\Users\\user\\.nuget\\packages\\microsoft.identitymodel.tokens\\8.9.0\\microsoft.identitymodel.tokens.8.9.0.nupkg.sha512",
+    "C:\\Users\\user\\.nuget\\packages\\mudblazor\\9.4.0\\mudblazor.9.4.0.nupkg.sha512",
+    "C:\\Users\\user\\.nuget\\packages\\system.identitymodel.tokens.jwt\\8.9.0\\system.identitymodel.tokens.jwt.8.9.0.nupkg.sha512"
+  ],
+  "logs": []
+}

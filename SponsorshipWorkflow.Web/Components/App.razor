@@ -1,0 +1,62 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <ResourcePreloader />
+    <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
+    <link rel="stylesheet" href="_content/MudBlazor/MudBlazor.min.css" />
+    <link rel="stylesheet" href="@Assets["app.css"]" />
+    <link rel="stylesheet" href="@Assets["SponsorshipWorkflow.Web.styles.css"]" />
+    <ImportMap />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <HeadOutlet @rendermode="InteractiveServer" />
+</head>
+
+<body>
+    <MudThemeProvider Theme="_theme" />
+    <MudPopoverProvider />
+    <MudDialogProvider />
+    <MudSnackbarProvider />
+    <Routes @rendermode="InteractiveServer" />
+    <ReconnectModal @rendermode="InteractiveServer" />
+    <script src="@Assets["_framework/blazor.web.js"]"></script>
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+</body>
+
+</html>
+
+@code {
+    private readonly MudTheme _theme = new()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = "#176b87",
+            Secondary = "#da7f3f",
+            Tertiary = "#5f8d4e",
+            AppbarBackground = "#ffffff",
+            AppbarText = "#1f2933",
+            DrawerBackground = "#1f2933",
+            DrawerText = "#e5edf4",
+            Background = "#f4f7fb",
+            Surface = "#ffffff",
+            Info = "#2563eb",
+            Success = "#2e7d32",
+            Warning = "#d97706",
+            Error = "#b42318"
+        },
+        LayoutProperties = new LayoutProperties
+        {
+            DefaultBorderRadius = "6px"
+        },
+        Typography = new Typography
+        {
+            Default = new DefaultTypography
+            {
+                FontFamily = new[] { "Segoe UI", "Arial", "sans-serif" }
+            }
+        }
+    };
+}

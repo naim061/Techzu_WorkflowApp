@@ -1,0 +1,136 @@
+﻿@page "/login"
+@rendermode InteractiveServer
+@layout EmptyLayout
+@inject AuthService Auth
+@inject NavigationManager Nav
+@inject TokenStore Store
+
+<PageTitle>Login</PageTitle>
+
+<div class="auth-page">
+    <MudPaper Class="auth-card pa-5 rich-panel" Elevation="10">
+        <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Size="Size.Large" Class="mb-3">
+            <MudIcon Icon="@Icons.Material.Filled.Handshake" />
+        </MudAvatar>
+        <MudText Typo="Typo.h4" Class="fw-bold mb-1">Sign In</MudText>
+        <MudText Typo="Typo.body2" Class="text-muted mb-4">Access the sponsorship approval workspace.</MudText>
+
+        <div>
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input class="form-control" @bind="_model.Email" @bind:event="oninput" autocomplete="username" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Password</label>
+                <input class="form-control" type="password" @bind="_model.Password" @bind:event="oninput" autocomplete="current-password" @onkeydown="HandleKeyDown" />
+            </div>
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Dense="true" Class="mb-3">@_error</MudAlert>
+            }
+            @if (_loading)
+            {
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-3" />
+            }
+            <MudButton ButtonType="ButtonType.Button"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       FullWidth="true"
+                       Disabled="@_loading"
+                       OnClick="Submit"
+                       StartIcon="@Icons.Material.Filled.Login">
+                @(_loading ? "Signing in..." : "Sign In")
+            </MudButton>
+        </div>
+
+        <MudButton Href="register" Variant="Variant.Text" Color="Color.Primary" FullWidth="true" Class="mt-2">Create Requestor Account</MudButton>
+        <MudDivider Class="my-4" />
+        <small class="text-muted">
+            Test: admin@@sponsorship.com / Admin@@2026<br />
+            Also: requestor, naim, manager, finance @@sponsorship.com / Admin@1234
+        </small>
+    </MudPaper>
+</div>
+
+@code {
+    [SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
+
+    private LoginRequest _model = new();
+    private string? _error;
+    private bool _loading;
+    private bool _restored;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_restored)
+        {
+            _restored = true;
+            if (!Store.IsAuthenticated)
+            {
+                var ok = await Auth.TryRestoreAsync();
+                if (ok)
+                {
+                    Nav.NavigateTo(ResolveDestination());
+                }
+            }
+            else
+            {
+                Nav.NavigateTo(ResolveDestination());
+            }
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !_loading)
+        {
+            await Submit();
+        }
+    }
+
+    private async Task Submit()
+    {
+        _error = null;
+
+        if (string.IsNullOrWhiteSpace(_model.Email) || string.IsNullOrWhiteSpace(_model.Password))
+        {
+            _error = "Email and password are required.";
+            return;
+        }
+
+        _loading = true;
+        try
+        {
+            var (ok, err) = await Auth.LoginAsync(_model.Email, _model.Password);
+            if (ok)
+            {
+                Nav.NavigateTo(ResolveDestination());
+            }
+            else
+            {
+                _error = err ?? "Login failed";
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private string ResolveDestination()
+    {
+        if (!string.IsNullOrWhiteSpace(ReturnUrl) && ReturnUrl != "/")
+        {
+            return ReturnUrl;
+        }
+
+        return Store.Role switch
+        {
+            "Requestor" => "/my-requests",
+            "Manager" => "/manager/queue",
+            "FinanceAdmin" => "/finance/queue",
+            "SystemAdmin" => "/requests",
+            _ => "/"
+        };
+    }
+}

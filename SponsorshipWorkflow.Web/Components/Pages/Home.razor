@@ -1,0 +1,204 @@
+@page "/"
+@rendermode InteractiveServer
+@inject ApiClient Api
+@inject TokenStore Store
+
+<PageTitle>Dashboard</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <div class="page-heading">
+            <div>
+                <h1>Dashboard</h1>
+                <p>Welcome, <strong>@Store.FullName</strong>. Your current workspace is tuned for @Store.Role tasks.</p>
+            </div>
+            <MudChip T="string" Color="Color.Secondary" Variant="Variant.Outlined" Size="Size.Small">@Store.Role</MudChip>
+        </div>
+
+        @if (_loading)
+        {
+            <MudPaper Class="pa-4 rich-panel" Elevation="0">
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Loading dashboard</MudText>
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+            </MudPaper>
+        }
+        else
+        {
+            <MudGrid Class="mb-4">
+                <MudItem xs="12" sm="6" lg="3">
+                    <div class="metric-card">
+                        <span>Total</span>
+                        <strong>@_stats.Total</strong>
+                        <small>workflow items</small>
+                    </div>
+                </MudItem>
+                <MudItem xs="12" sm="6" lg="3">
+                    <div class="metric-card">
+                        <span>Pending</span>
+                        <strong>@_stats.Pending</strong>
+                        <small>awaiting action</small>
+                    </div>
+                </MudItem>
+                <MudItem xs="12" sm="6" lg="3">
+                    <div class="metric-card">
+                        <span>Approved</span>
+                        <strong>@_stats.Approved</strong>
+                        <small>completed successfully</small>
+                    </div>
+                </MudItem>
+                <MudItem xs="12" sm="6" lg="3">
+                    <div class="metric-card">
+                        <span>Rejected / Cancelled</span>
+                        <strong>@_stats.Closed</strong>
+                        <small>closed without approval</small>
+                    </div>
+                </MudItem>
+            </MudGrid>
+
+            <MudPaper Class="pa-4 mb-4 rich-panel" Elevation="0">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <MudText Typo="Typo.subtitle1" Class="fw-bold">Approval health</MudText>
+                        <MudText Typo="Typo.body2" Class="text-muted">Approved items compared with visible workflow volume.</MudText>
+                    </div>
+                    <div style="min-width: min(320px, 100%);">
+                        <MudProgressLinear Value="@ApprovalRate" Color="Color.Success" Rounded="true" />
+                        <MudText Typo="Typo.caption" Class="d-block text-end mt-1">@ApprovalRate% approved</MudText>
+                    </div>
+                </div>
+            </MudPaper>
+
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                @if (Store.Role == "Requestor")
+                {
+                    <MudButton Href="requests/new" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">New Request</MudButton>
+                    <MudButton Href="my-requests" Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Assignment">My Requests</MudButton>
+                }
+                @if (Store.Role == "Manager" || Store.Role == "SystemAdmin")
+                {
+                    <MudButton Href="manager/queue" Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.VerifiedUser">Manager Queue</MudButton>
+                }
+                @if (Store.Role == "FinanceAdmin" || Store.Role == "SystemAdmin")
+                {
+                    <MudButton Href="finance/queue" Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AccountBalance">Finance Queue</MudButton>
+                }
+                @if (Store.Role == "SystemAdmin" || Store.Role == "Manager" || Store.Role == "FinanceAdmin")
+                {
+                    <MudButton Href="requests" Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ViewList">All Requests</MudButton>
+                }
+                @if (Store.Role == "SystemAdmin")
+                {
+                    <MudButton Href="admin/types" Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Category">Sponsorship Types</MudButton>
+                }
+            </div>
+
+            @if (_recent.Count > 0)
+            {
+                <MudPaper Class="pa-4 rich-panel" Elevation="0">
+                    <MudText Typo="Typo.h6" Class="mb-3">Recent Work</MudText>
+                    <MudTable Items="_recent.Take(8)" Hover="true" Dense="true" Elevation="0" Class="rich-table">
+                        <HeaderContent>
+                            <MudTh>Number</MudTh>
+                            <MudTh>Title</MudTh>
+                            <MudTh>Requestor</MudTh>
+                            <MudTh>Amount</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh></MudTh>
+                        </HeaderContent>
+                        <RowTemplate Context="item">
+                            <MudTd DataLabel="Number">@item.RequestNumber</MudTd>
+                            <MudTd DataLabel="Title">@item.Title</MudTd>
+                            <MudTd DataLabel="Requestor">@item.RequestorName</MudTd>
+                            <MudTd DataLabel="Amount">@item.RequestedAmount.ToString("N2")</MudTd>
+                            <MudTd DataLabel="Status"><StatusBadge Status="@item.Status" /></MudTd>
+                            <MudTd DataLabel="Open" Class="text-end">
+                                <MudButton Href="@($"requests/{item.Id}")" Variant="Variant.Text" Color="Color.Primary" Size="Size.Small" EndIcon="@Icons.Material.Filled.ArrowForward">Open</MudButton>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudPaper>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">No workflow items are available for your role yet.</MudAlert>
+            }
+        }
+    </Authorized>
+    <NotAuthorized>
+        <MudPaper Class="auth-splash pa-6 rich-panel" Elevation="0">
+            <MudText Typo="Typo.h3" Class="fw-bold mb-2">Sponsorship Workflow</MudText>
+            <MudText Typo="Typo.body1" Class="text-muted mb-4">Sign in to create requests, approve pending work, and review the audit trail.</MudText>
+            <MudButton Href="/login" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Login">Sign In</MudButton>
+        </MudPaper>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private readonly DashboardStats _stats = new();
+    private readonly List<SponsorshipRequestSummaryDto> _recent = new();
+    private bool _loading = true;
+    private bool _loaded;
+    private int ApprovalRate => _stats.Total == 0 ? 0 : (int)Math.Round((_stats.Approved / (double)_stats.Total) * 100);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_loaded && Store.IsAuthenticated)
+        {
+            _loaded = true;
+            await LoadDashboard();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadDashboard()
+    {
+        _loading = true;
+        _recent.Clear();
+
+        if (Store.Role == "Requestor")
+        {
+            var response = await Api.GetAsync<List<SponsorshipRequestSummaryDto>>("/api/SponsorshipRequests/my-requests");
+            AddItems(response?.Data);
+        }
+        else if (Store.Role == "Manager")
+        {
+            var response = await Api.GetAsync<List<SponsorshipRequestSummaryDto>>("/api/SponsorshipRequests/pending-manager-approval");
+            AddItems(response?.Data);
+        }
+        else if (Store.Role == "FinanceAdmin")
+        {
+            var response = await Api.GetAsync<List<SponsorshipRequestSummaryDto>>("/api/SponsorshipRequests/pending-finance-review");
+            AddItems(response?.Data);
+        }
+        else if (Store.Role == "SystemAdmin")
+        {
+            var response = await Api.GetAsync<List<SponsorshipRequestSummaryDto>>("/api/SponsorshipRequests?page=1&pageSize=50");
+            AddItems(response?.Data);
+        }
+
+        RecalculateStats();
+        _loading = false;
+    }
+
+    private void AddItems(IEnumerable<SponsorshipRequestSummaryDto>? items)
+    {
+        if (items is null) return;
+        _recent.AddRange(items.OrderByDescending(x => x.CreatedAt));
+    }
+
+    private void RecalculateStats()
+    {
+        _stats.Total = _recent.Count;
+        _stats.Pending = _recent.Count(x => x.Status is "PendingManagerApproval" or "PendingFinanceReview");
+        _stats.Approved = _recent.Count(x => x.Status == "Approved");
+        _stats.Closed = _recent.Count(x => x.Status is "Rejected" or "Cancelled");
+    }
+
+    private sealed class DashboardStats
+    {
+        public int Total { get; set; }
+        public int Pending { get; set; }
+        public int Approved { get; set; }
+        public int Closed { get; set; }
+    }
+}

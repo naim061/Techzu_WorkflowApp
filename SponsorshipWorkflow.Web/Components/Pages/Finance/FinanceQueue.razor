@@ -1,0 +1,59 @@
+@page "/finance/queue"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "FinanceAdmin,SystemAdmin")]
+@inject ApiClient Api
+
+<PageTitle>Finance Queue</PageTitle>
+
+<div class="page-heading">
+    <div>
+        <h1>Pending Finance Reviews</h1>
+        <p>Finalize approved sponsorship requests from the finance queue.</p>
+    </div>
+    @if (_items is not null)
+    {
+        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined" Size="Size.Small">@_items.Count pending</MudChip>
+    }
+</div>
+
+@if (_loading) { <MudProgressLinear Color="Color.Primary" Indeterminate="true" /> }
+else if (_items == null || _items.Count == 0) { <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">No pending reviews.</MudAlert> }
+else
+{
+    <MudPaper Class="pa-4 rich-panel" Elevation="0">
+        <MudTable Items="_items" Hover="true" Dense="true" Elevation="0" Class="rich-table">
+            <HeaderContent>
+                <MudTh>Number</MudTh>
+                <MudTh>Title</MudTh>
+                <MudTh>Requestor</MudTh>
+                <MudTh>Department</MudTh>
+                <MudTh>Type</MudTh>
+                <MudTh>Amount</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Number">@context.RequestNumber</MudTd>
+                <MudTd DataLabel="Title">@context.Title</MudTd>
+                <MudTd DataLabel="Requestor">@context.RequestorName</MudTd>
+                <MudTd DataLabel="Department">@context.Department</MudTd>
+                <MudTd DataLabel="Type">@context.SponsorshipTypeName</MudTd>
+                <MudTd DataLabel="Amount">@context.RequestedAmount.ToString("N2")</MudTd>
+                <MudTd DataLabel="Actions" Class="text-end">
+                    <MudButton Href="@($"requests/{context.Id}")" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" EndIcon="@Icons.Material.Filled.ArrowForward">Review</MudButton>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+}
+
+@code {
+    private List<SponsorshipRequestSummaryDto>? _items;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var res = await Api.GetAsync<List<SponsorshipRequestSummaryDto>>("/api/SponsorshipRequests/pending-finance-review");
+        _items = res?.Data ?? new();
+        _loading = false;
+    }
+}

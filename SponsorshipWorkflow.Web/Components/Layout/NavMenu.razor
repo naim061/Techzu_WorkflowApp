@@ -1,0 +1,41 @@
+﻿<div class="brand-panel">
+    <MudAvatar Color="Color.Secondary" Variant="Variant.Filled" Size="Size.Medium">
+        <MudIcon Icon="@Icons.Material.Filled.Handshake" />
+    </MudAvatar>
+    <div>
+        <MudText Typo="Typo.subtitle1" Class="brand-title">TechZu</MudText>
+        <MudText Typo="Typo.caption" Class="brand-subtitle">Workflow Desk</MudText>
+    </div>
+</div>
+
+<MudDivider Class="drawer-divider" />
+
+<MudNavMenu Dense="true" Class="workflow-nav">
+    <MudText Typo="Typo.overline" Class="nav-section">Overview</MudText>
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
+
+    <AuthorizeView Roles="Requestor">
+        <MudText Typo="Typo.overline" Class="nav-section">Requests</MudText>
+        <MudNavLink Href="my-requests" Icon="@Icons.Material.Filled.Assignment">My Requests</MudNavLink>
+        <MudNavLink Href="requests/new" Icon="@Icons.Material.Filled.AddCircle">New Request</MudNavLink>
+    </AuthorizeView>
+
+    <AuthorizeView Roles="Manager,SystemAdmin">
+        <MudText Typo="Typo.overline" Class="nav-section">Approvals</MudText>
+        <MudNavLink Href="manager/queue" Icon="@Icons.Material.Filled.VerifiedUser">Manager Approvals</MudNavLink>
+    </AuthorizeView>
+
+    <AuthorizeView Roles="FinanceAdmin,SystemAdmin">
+        <MudNavLink Href="finance/queue" Icon="@Icons.Material.Filled.AccountBalance">Finance Reviews</MudNavLink>
+    </AuthorizeView>
+
+    <AuthorizeView Roles="SystemAdmin,Manager,FinanceAdmin">
+        <MudNavLink Href="requests" Icon="@Icons.Material.Filled.ViewList">All Requests</MudNavLink>
+    </AuthorizeView>
+
+    <AuthorizeView Roles="SystemAdmin">
+        <MudText Typo="Typo.overline" Class="nav-section">Admin</MudText>
+        <MudNavLink Href="admin/types" Icon="@Icons.Material.Filled.Category">Sponsorship Types</MudNavLink>
+        <MudNavLink Href="admin/users" Icon="@Icons.Material.Filled.GroupAdd">Pending Users</MudNavLink>
+    </AuthorizeView>
+</MudNavMenu>

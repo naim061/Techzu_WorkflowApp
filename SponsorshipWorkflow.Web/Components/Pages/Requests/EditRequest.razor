@@ -1,0 +1,176 @@
+@page "/requests/{Id:guid}/edit"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Requestor")]
+@inject ApiClient Api
+@inject NavigationManager Nav
+@inject TokenStore Store
+
+<PageTitle>Edit Request</PageTitle>
+
+@if (_loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+}
+else if (_request == null)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">Request not found or you do not have access.</MudAlert>
+}
+else if (_request.Status != "Draft")
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-3">Only draft requests can be edited.</MudAlert>
+    <MudButton Href="@($"/requests/{Id}")" Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ArrowBack">Back to details</MudButton>
+}
+else if (_types.Count == 0)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">No active sponsorship types are available.</MudAlert>
+}
+else
+{
+    <div class="page-heading">
+        <div>
+            <h1>Edit @_request.RequestNumber</h1>
+            <p>Update the draft before submitting it for approval.</p>
+        </div>
+        <StatusBadge Status="@_request.Status" />
+    </div>
+
+    <MudPaper Class="pa-4 rich-panel" Elevation="0">
+        @if (_busy)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-4" />
+        }
+        <EditForm Model="_model" OnValidSubmit="Save" FormName="editReq">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label">Title *</label>
+                    <InputText class="form-control" @bind-Value="_model.Title" />
+                    <ValidationMessage For="@(() => _model.Title)" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Department *</label>
+                    <InputText class="form-control" @bind-Value="_model.Department" />
+                    <ValidationMessage For="@(() => _model.Department)" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Sponsorship Type *</label>
+                    <InputSelect class="form-select" @bind-Value="_model.SponsorshipTypeId">
+                        <option value="0">-- Select --</option>
+                        @foreach (var t in _types)
+                        {
+                            <option value="@t.Id">@t.Name</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => _model.SponsorshipTypeId)" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Event / Organisation Name *</label>
+                    <InputText class="form-control" @bind-Value="_model.EventOrganisationName" />
+                    <ValidationMessage For="@(() => _model.EventOrganisationName)" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Event Date *</label>
+                    <InputDate class="form-control" @bind-Value="_model.EventDate" />
+                    <ValidationMessage For="@(() => _model.EventDate)" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Requested Amount *</label>
+                    <InputNumber class="form-control" @bind-Value="_model.RequestedAmount" />
+                    <ValidationMessage For="@(() => _model.RequestedAmount)" />
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Purpose / Justification *</label>
+                    <InputTextArea class="form-control" rows="3" @bind-Value="_model.Purpose" />
+                    <ValidationMessage For="@(() => _model.Purpose)" />
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Expected Business Benefit</label>
+                    <InputTextArea class="form-control" rows="2" @bind-Value="_model.ExpectedBusinessBenefit" />
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Remarks</label>
+                    <InputTextArea class="form-control" rows="2" @bind-Value="_model.Remarks" />
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mt-3">@_error</MudAlert>
+            }
+
+            <div class="mt-4 d-flex flex-wrap gap-2">
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@_busy" StartIcon="@Icons.Material.Filled.Save">@(_busy ? "Saving..." : "Save Changes")</MudButton>
+                <MudButton Href="@($"/requests/{Id}")" Variant="Variant.Outlined" Color="Color.Default" StartIcon="@Icons.Material.Filled.Close">Cancel</MudButton>
+            </div>
+        </EditForm>
+    </MudPaper>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private SponsorshipRequestDto? _request;
+    private List<SponsorshipTypeDto> _types = new();
+    private UpdateSponsorshipRequest _model = new();
+    private string? _error;
+    private bool _loading = true;
+    private bool _busy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var requestResult = await Api.GetAsync<SponsorshipRequestDto>($"/api/SponsorshipRequests/{Id}");
+        _request = requestResult?.Data;
+
+        var typesResult = await Api.GetAsync<List<SponsorshipTypeDto>>("/api/SponsorshipTypes");
+        _types = typesResult?.Data ?? new();
+
+        if (_request is not null)
+        {
+            _model = new UpdateSponsorshipRequest
+            {
+                Title = _request.Title,
+                Department = string.IsNullOrWhiteSpace(_request.Department) ? Store.Department ?? "" : _request.Department,
+                SponsorshipTypeId = _request.SponsorshipTypeId,
+                EventOrganisationName = _request.EventOrganisationName,
+                EventDate = _request.EventDate,
+                RequestedAmount = _request.RequestedAmount,
+                Purpose = _request.Purpose,
+                ExpectedBusinessBenefit = _request.ExpectedBusinessBenefit,
+                Remarks = _request.Remarks
+            };
+        }
+
+        _loading = false;
+    }
+
+    private async Task Save()
+    {
+        if (_model.EventDate.Date < DateTime.Today)
+        {
+            _error = "Event date cannot be in the past.";
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+
+        try
+        {
+            var response = await Api.PutAsync<SponsorshipRequestDto>($"/api/SponsorshipRequests/{Id}", _model);
+            if (response?.Success == true)
+            {
+                Nav.NavigateTo($"/requests/{Id}");
+            }
+            else
+            {
+                _error = response?.Message ?? "Update failed.";
+            }
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

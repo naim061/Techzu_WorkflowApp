@@ -1,0 +1,317 @@
+@page "/requests/{Id:guid}"
+@rendermode InteractiveServer
+@attribute [Authorize]
+@inject ApiClient Api
+@inject TokenStore Store
+
+<PageTitle>Request Detail</PageTitle>
+
+@if (_loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+}
+else if (_req == null)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">Not found or no access.</MudAlert>
+}
+else
+{
+    <div class="page-heading">
+        <div>
+            <h1>@_req.RequestNumber</h1>
+            <p>@_req.Title</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            @if (Store.Role == "Requestor" && _req.RequestorId == Store.UserId && _req.Status == "Draft")
+            {
+                <MudButton Href="@($"/requests/{_req.Id}/edit")" Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit">Edit Draft</MudButton>
+            }
+            <StatusBadge Status="@_req.Status" />
+        </div>
+    </div>
+
+    <MudGrid Class="mb-3">
+        <MudItem xs="12" lg="8">
+            <MudPaper Class="pa-4 rich-panel h-100" Elevation="0">
+                <MudText Typo="Typo.h6" Class="mb-3">Request Details</MudText>
+                <div class="detail-grid">
+                    <div class="detail-tile"><span>Requestor</span><strong>@_req.RequestorName</strong></div>
+                    <div class="detail-tile"><span>Department</span><strong>@_req.Department</strong></div>
+                    <div class="detail-tile"><span>Sponsorship Type</span><strong>@_req.SponsorshipTypeName</strong></div>
+                    <div class="detail-tile"><span>Event Org</span><strong>@_req.EventOrganisationName</strong></div>
+                    <div class="detail-tile"><span>Event Date</span><strong>@_req.EventDate.ToString("d")</strong></div>
+                    <div class="detail-tile"><span>Amount</span><strong>@_req.RequestedAmount.ToString("N2")</strong></div>
+                    <div class="detail-tile"><span>Created</span><strong>@_req.CreatedAt.ToLocalTime().ToString("g")</strong></div>
+                    <div class="detail-tile"><span>Submitted</span><strong>@(_req.SubmittedAt?.ToLocalTime().ToString("g") ?? "-")</strong></div>
+                </div>
+                <MudDivider Class="my-4" />
+                <MudText Typo="Typo.subtitle2">Purpose</MudText>
+                <MudText Typo="Typo.body2" Class="mb-3">@_req.Purpose</MudText>
+                @if (!string.IsNullOrEmpty(_req.ExpectedBusinessBenefit))
+                {
+                    <MudText Typo="Typo.subtitle2">Expected Benefit</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-3">@_req.ExpectedBusinessBenefit</MudText>
+                }
+                @if (!string.IsNullOrEmpty(_req.Remarks))
+                {
+                    <MudText Typo="Typo.subtitle2">Remarks</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-3">@_req.Remarks</MudText>
+                }
+                @if (!string.IsNullOrEmpty(_req.CancelledReason))
+                {
+                    <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">Cancellation Reason: @_req.CancelledReason</MudAlert>
+                }
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" lg="4">
+            <MudPaper Class="pa-4 rich-panel h-100" Elevation="0">
+                <MudText Typo="Typo.h6" Class="mb-3">Workflow</MudText>
+                <WorkflowProgress Status="@_req.Status" />
+                <MudDivider Class="my-4" />
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Supporting Documents</MudText>
+                @if (_req.Documents.Count > 0)
+                {
+                    <MudList T="DocumentDto" Dense="true">
+                        @foreach (var d in _req.Documents)
+                        {
+                            <MudListItem Icon="@Icons.Material.Filled.AttachFile">
+                                <div>
+                                    <MudText Typo="Typo.body2">@d.FileName</MudText>
+                                    <MudText Typo="Typo.caption" Class="text-muted">@FormatFileSize(d.FileSize)</MudText>
+                                </div>
+                            </MudListItem>
+                        }
+                    </MudList>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2" Class="text-muted">No supporting documents.</MudText>
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudPaper Class="pa-3 mb-3 rich-panel" Elevation="0">
+        <div class="d-flex flex-wrap gap-2">
+        @if (Store.Role == "Requestor" && _req.RequestorId == Store.UserId)
+        {
+            @if (_req.Status == "Draft")
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="Submit" Disabled="@_busy" StartIcon="@Icons.Material.Filled.Send">Submit for Approval</MudButton>
+            }
+            @if (_req.Status == "Draft" || _req.Status == "PendingManagerApproval")
+            {
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="@(() => ShowAction("cancel"))" Disabled="@_busy" StartIcon="@Icons.Material.Filled.Cancel">Cancel Request</MudButton>
+            }
+        }
+        @if (Store.Role == "Manager" && _req.Status == "PendingManagerApproval")
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@(() => ShowAction("mgr-approve"))" Disabled="@_busy" StartIcon="@Icons.Material.Filled.CheckCircle">Approve</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="@(() => ShowAction("mgr-reject"))" Disabled="@_busy" StartIcon="@Icons.Material.Filled.Cancel">Reject</MudButton>
+        }
+        @if (Store.Role == "FinanceAdmin" && _req.Status == "PendingFinanceReview")
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@(() => ShowAction("fin-approve"))" Disabled="@_busy" StartIcon="@Icons.Material.Filled.PriceCheck">Final Approve</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="@(() => ShowAction("fin-reject"))" Disabled="@_busy" StartIcon="@Icons.Material.Filled.Cancel">Reject</MudButton>
+        }
+        @if (_busy)
+        {
+            <div class="w-100 pt-2">
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+            </div>
+        }
+        </div>
+    </MudPaper>
+
+    @if (_action != null)
+    {
+        <MudPaper Class="pa-4 mb-3 rich-panel" Elevation="0">
+                <MudText Typo="Typo.h6" Class="mb-3">@ActionTitle</MudText>
+                <div class="mb-3">
+                    <label class="form-label">@ActionInputLabel</label>
+                    <textarea class="form-control" rows="3" @bind="_remarks"></textarea>
+                </div>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ConfirmAction" Disabled="@_busy" StartIcon="@Icons.Material.Filled.Done">Confirm</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="@(() => _action = null)" Class="ms-2" StartIcon="@Icons.Material.Filled.Close">Cancel</MudButton>
+        </MudPaper>
+    }
+
+    @if (!string.IsNullOrEmpty(_msg))
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-3">@_msg</MudAlert>
+    }
+    @if (!string.IsNullOrEmpty(_err))
+    {
+        <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mb-3">@_err</MudAlert>
+    }
+
+    <MudPaper Class="pa-4 rich-panel" Elevation="0">
+        <MudText Typo="Typo.h6" Class="mb-3">Workflow History</MudText>
+            @if (_req.WorkflowHistory.Count > 0)
+            {
+                <MudTimeline>
+                    @foreach (var h in _req.WorkflowHistory.OrderBy(x => x.CreatedAt))
+                    {
+                        <MudTimelineItem Color="Color.Primary" Size="Size.Small">
+                            <ItemContent>
+                                <div class="d-flex justify-content-between gap-3">
+                                    <div>
+                                        <MudText Typo="Typo.subtitle2">@(string.IsNullOrEmpty(h.ActionDisplayName) ? h.Action : h.ActionDisplayName)</MudText>
+                                        <MudText Typo="Typo.body2" Class="text-muted">by @h.ActorName (@h.ActorRole) - @DisplayTransition(h)</MudText>
+                                    </div>
+                                    <MudText Typo="Typo.caption" Class="text-muted">@h.CreatedAt.ToLocalTime().ToString("g")</MudText>
+                                </div>
+                                @if (!string.IsNullOrEmpty(h.Remarks))
+                                {
+                                    <MudText Typo="Typo.body2" Class="mt-1">@h.Remarks</MudText>
+                                }
+                            </ItemContent>
+                        </MudTimelineItem>
+                    }
+                </MudTimeline>
+            }
+            else
+            {
+                <MudText Typo="Typo.body2" Class="text-muted">No workflow entries yet.</MudText>
+            }
+    </MudPaper>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private SponsorshipRequestDto? _req;
+    private bool _loading = true;
+    private bool _busy;
+    private string? _action;
+    private string? _remarks;
+    private string? _msg;
+    private string? _err;
+
+    private string ActionTitle => _action switch
+    {
+        "cancel" => "Cancel Request",
+        "mgr-approve" => "Manager Approval",
+        "mgr-reject" => "Manager Rejection",
+        "fin-approve" => "Finance Approval",
+        "fin-reject" => "Finance Rejection",
+        _ => ""
+    };
+
+    private string ActionInputLabel => _action switch
+    {
+        "cancel" => "Reason *",
+        "mgr-reject" or "fin-reject" => "Remarks *",
+        _ => "Remarks"
+    };
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
+    {
+        _loading = true;
+        var res = await Api.GetAsync<SponsorshipRequestDto>($"/api/SponsorshipRequests/{Id}");
+        _req = res?.Data;
+        if (_req is not null && _req.WorkflowHistory.Count == 0)
+        {
+            var history = await Api.GetAsync<List<WorkflowHistoryDto>>($"/api/SponsorshipRequests/{Id}/workflow-history");
+            _req.WorkflowHistory = history?.Data ?? new();
+        }
+        _loading = false;
+    }
+
+    private void ShowAction(string action)
+    {
+        _action = action;
+        _remarks = "";
+        _err = null;
+        _msg = null;
+    }
+
+    private async Task Submit()
+    {
+        _busy = true;
+        _err = null;
+        _msg = null;
+
+        var res = await Api.PostAsync<SponsorshipRequestDto>($"/api/SponsorshipRequests/{Id}/submit", null);
+        if (res?.Success == true)
+        {
+            _msg = res.Message;
+            await Load();
+        }
+        else
+        {
+            _err = res?.Message ?? "Failed";
+        }
+
+        _busy = false;
+    }
+
+    private async Task ConfirmAction()
+    {
+        if (_action == null) return;
+
+        _busy = true;
+        _err = null;
+        _msg = null;
+
+        ApiResponse<SponsorshipRequestDto>? res = null;
+        switch (_action)
+        {
+            case "cancel":
+                if (string.IsNullOrWhiteSpace(_remarks)) { _err = "Reason required."; _busy = false; return; }
+                res = await Api.PostAsync<SponsorshipRequestDto>($"/api/SponsorshipRequests/{Id}/cancel",
+                    new CancelRequestDto { Reason = _remarks! });
+                break;
+            case "mgr-approve":
+                res = await Api.PostAsync<SponsorshipRequestDto>($"/api/SponsorshipRequests/{Id}/manager-approve",
+                    new WorkflowActionDto { Remarks = _remarks });
+                break;
+            case "mgr-reject":
+                if (string.IsNullOrWhiteSpace(_remarks)) { _err = "Rejection remarks are required."; _busy = false; return; }
+                res = await Api.PostAsync<SponsorshipRequestDto>($"/api/SponsorshipRequests/{Id}/manager-reject",
+                    new WorkflowActionDto { Remarks = _remarks });
+                break;
+            case "fin-approve":
+                res = await Api.PostAsync<SponsorshipRequestDto>($"/api/SponsorshipRequests/{Id}/finance-approve",
+                    new WorkflowActionDto { Remarks = _remarks });
+                break;
+            case "fin-reject":
+                if (string.IsNullOrWhiteSpace(_remarks)) { _err = "Rejection remarks are required."; _busy = false; return; }
+                res = await Api.PostAsync<SponsorshipRequestDto>($"/api/SponsorshipRequests/{Id}/finance-reject",
+                    new WorkflowActionDto { Remarks = _remarks });
+                break;
+        }
+
+        if (res?.Success == true)
+        {
+            _msg = res.Message;
+            _action = null;
+            await Load();
+        }
+        else
+        {
+            _err = res?.Message ?? "Action failed";
+        }
+
+        _busy = false;
+    }
+
+    private static string DisplayTransition(WorkflowHistoryDto h)
+    {
+        if (string.IsNullOrWhiteSpace(h.FromStatus))
+        {
+            return h.ToStatus;
+        }
+
+        return $"{h.FromStatus} -> {h.ToStatus}";
+    }
+
+    private static string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024m:N1} KB";
+        return $"{bytes / 1024m / 1024m:N1} MB";
+    }
+}

@@ -1,0 +1,72 @@
+@page "/my-requests"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Requestor")]
+@inject ApiClient Api
+
+<PageTitle>My Requests</PageTitle>
+
+<div class="page-heading">
+    <div>
+        <h1>My Requests</h1>
+        <p>Track drafts, approvals, and completed sponsorship requests.</p>
+    </div>
+    <MudButton Href="requests/new" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">New Request</MudButton>
+</div>
+
+@if (_loading)
+{
+    <MudPaper Class="pa-4 rich-panel" Elevation="0">
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+    </MudPaper>
+}
+else if (_items == null || _items.Count == 0)
+{
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+        No requests yet. <MudLink Href="requests/new">Create one</MudLink>.
+    </MudAlert>
+}
+else
+{
+    <MudPaper Class="pa-4 rich-panel" Elevation="0">
+        <MudTable Items="_items" Hover="true" Dense="true" Elevation="0" Class="rich-table">
+            <HeaderContent>
+                <MudTh>Number</MudTh>
+                <MudTh>Title</MudTh>
+                <MudTh>Type</MudTh>
+                <MudTh>Amount</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh>Progress</MudTh>
+                <MudTh>Created</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Number">@context.RequestNumber</MudTd>
+                <MudTd DataLabel="Title">@context.Title</MudTd>
+                <MudTd DataLabel="Type">@context.SponsorshipTypeName</MudTd>
+                <MudTd DataLabel="Amount">@context.RequestedAmount.ToString("N2")</MudTd>
+                <MudTd DataLabel="Status"><StatusBadge Status="@context.Status" /></MudTd>
+                <MudTd DataLabel="Progress"><WorkflowProgress Status="@context.Status" /></MudTd>
+                <MudTd DataLabel="Created">@context.CreatedAt.ToLocalTime().ToString("g")</MudTd>
+                <MudTd DataLabel="Actions" Class="text-end">
+                    @if (context.Status == "Draft")
+                    {
+                        <MudButton Href="@($"requests/{context.Id}/edit")" Variant="Variant.Text" Color="Color.Secondary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Edit">Edit</MudButton>
+                    }
+                    <MudButton Href="@($"requests/{context.Id}")" Variant="Variant.Text" Color="Color.Primary" Size="Size.Small" EndIcon="@Icons.Material.Filled.ArrowForward">View</MudButton>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+}
+
+@code {
+    private List<SponsorshipRequestSummaryDto>? _items;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var res = await Api.GetAsync<List<SponsorshipRequestSummaryDto>>("/api/SponsorshipRequests/my-requests");
+        _items = res?.Data ?? new();
+        _loading = false;
+    }
+}

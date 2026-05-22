@@ -1,0 +1,138 @@
+@page "/requests/new"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Requestor")]
+@inject ApiClient Api
+@inject NavigationManager Nav
+@inject TokenStore Store
+
+<PageTitle>New Request</PageTitle>
+
+<div class="page-heading">
+    <div>
+        <h1>New Sponsorship Request</h1>
+        <p>Capture event details, budget, and the business case before routing approval.</p>
+    </div>
+</div>
+
+@if (_types == null)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    <MudPaper Class="pa-4 rich-panel" Elevation="0">
+        @if (_busy)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-4" />
+        }
+        <EditForm Model="_model" OnValidSubmit="Save" FormName="createReq">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label">Title *</label>
+                    <InputText class="form-control" @bind-Value="_model.Title" />
+                    <ValidationMessage For="@(() => _model.Title)" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Department *</label>
+                    <InputText class="form-control" @bind-Value="_model.Department" />
+                    <ValidationMessage For="@(() => _model.Department)" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Sponsorship Type *</label>
+                    <InputSelect class="form-select" @bind-Value="_model.SponsorshipTypeId">
+                        <option value="0">-- Select --</option>
+                        @foreach (var t in _types)
+                        {
+                            <option value="@t.Id">@t.Name</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => _model.SponsorshipTypeId)" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Event / Organisation Name *</label>
+                    <InputText class="form-control" @bind-Value="_model.EventOrganisationName" />
+                    <ValidationMessage For="@(() => _model.EventOrganisationName)" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Event Date *</label>
+                    <InputDate class="form-control" @bind-Value="_model.EventDate" />
+                    <ValidationMessage For="@(() => _model.EventDate)" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Requested Amount *</label>
+                    <InputNumber class="form-control" @bind-Value="_model.RequestedAmount" />
+                    <ValidationMessage For="@(() => _model.RequestedAmount)" />
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Purpose / Justification *</label>
+                    <InputTextArea class="form-control" rows="3" @bind-Value="_model.Purpose" />
+                    <ValidationMessage For="@(() => _model.Purpose)" />
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Expected Business Benefit</label>
+                    <InputTextArea class="form-control" rows="2" @bind-Value="_model.ExpectedBusinessBenefit" />
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Remarks</label>
+                    <InputTextArea class="form-control" rows="2" @bind-Value="_model.Remarks" />
+                </div>
+                <div class="col-12">
+                    <MudCheckBox T="bool" @bind-Value="_model.SubmitImmediately" Color="Color.Primary" Label="Submit for approval immediately" />
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mt-3">@_error</MudAlert>
+            }
+
+            <div class="mt-4 d-flex flex-wrap gap-2">
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@_busy" StartIcon="@Icons.Material.Filled.Save">@(_busy ? "Saving..." : "Save")</MudButton>
+                <MudButton Href="my-requests" Variant="Variant.Outlined" Color="Color.Default" StartIcon="@Icons.Material.Filled.Close">Cancel</MudButton>
+            </div>
+        </EditForm>
+    </MudPaper>
+}
+
+@code {
+    private List<SponsorshipTypeDto>? _types;
+    private CreateSponsorshipRequest _model = new()
+    {
+        Department = "",
+        EventDate = DateTime.Today.AddMonths(1)
+    };
+    private string? _error;
+    private bool _busy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(Store.Department))
+            _model.Department = Store.Department;
+
+        var res = await Api.GetAsync<List<SponsorshipTypeDto>>("/api/SponsorshipTypes");
+        _types = res?.Data ?? new();
+    }
+
+    private async Task Save()
+    {
+        if (_model.EventDate.Date < DateTime.Today)
+        {
+            _error = "Event date cannot be in the past.";
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var res = await Api.PostAsync<SponsorshipRequestDto>("/api/SponsorshipRequests", _model);
+            if (res != null && res.Success && res.Data != null)
+                Nav.NavigateTo($"/requests/{res.Data.Id}");
+            else
+                _error = res?.Message ?? "Save failed";
+        }
+        finally { _busy = false; }
+    }
+}

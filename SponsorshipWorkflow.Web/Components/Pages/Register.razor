@@ -1,0 +1,118 @@
+﻿@page "/register"
+@rendermode InteractiveServer
+@layout EmptyLayout
+@inject AuthService Auth
+
+<PageTitle>Register</PageTitle>
+
+<div class="auth-page">
+    <MudPaper Class="auth-card pa-5 rich-panel" Elevation="10">
+        <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Size="Size.Large" Class="mb-3">
+            <MudIcon Icon="@Icons.Material.Filled.PersonAdd" />
+        </MudAvatar>
+        <MudText Typo="Typo.h4" Class="fw-bold mb-1">Create Account</MudText>
+        <MudText Typo="Typo.body2" Class="text-muted mb-4">New requestor accounts are activated after admin approval.</MudText>
+
+        @if (!string.IsNullOrEmpty(_success))
+        {
+            <MudAlert Severity="Severity.Success" Variant="Variant.Filled" Dense="true" Class="mb-3">@_success</MudAlert>
+        }
+        else
+        {
+            <div>
+                <div class="mb-3">
+                    <label class="form-label">Full Name</label>
+                    <input class="form-control" @bind="_model.FullName" @bind:event="oninput" autocomplete="name" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input class="form-control" @bind="_model.Email" @bind:event="oninput" autocomplete="username" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Department</label>
+                    <input class="form-control" @bind="_model.Department" @bind:event="oninput" autocomplete="organization-title" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <input class="form-control" type="password" @bind="_model.Password" @bind:event="oninput" autocomplete="new-password" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Confirm Password</label>
+                    <input class="form-control" type="password" @bind="_model.ConfirmPassword" @bind:event="oninput" autocomplete="new-password" @onkeydown="HandleKeyDown" />
+                </div>
+                @if (!string.IsNullOrEmpty(_error))
+                {
+                    <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Dense="true" Class="mb-3">@_error</MudAlert>
+                }
+                @if (_loading)
+                {
+                    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-3" />
+                }
+                <MudButton ButtonType="ButtonType.Button"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           FullWidth="true"
+                           Disabled="@_loading"
+                           OnClick="Submit"
+                           StartIcon="@Icons.Material.Filled.PersonAdd">
+                    @(_loading ? "Submitting..." : "Submit Registration")
+                </MudButton>
+            </div>
+        }
+
+        <MudButton Href="login" Variant="Variant.Text" Color="Color.Primary" FullWidth="true" Class="mt-2">Back to Sign In</MudButton>
+    </MudPaper>
+</div>
+
+@code {
+    private RegisterRequest _model = new();
+    private string? _error;
+    private string? _success;
+    private bool _loading;
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !_loading)
+        {
+            await Submit();
+        }
+    }
+
+    private async Task Submit()
+    {
+        _error = Validate();
+        if (_error is not null)
+        {
+            return;
+        }
+
+        _loading = true;
+        try
+        {
+            var (ok, err) = await Auth.RegisterAsync(_model);
+            if (ok)
+            {
+                _success = "Registration submitted. Please wait for admin approval before signing in.";
+                _model = new();
+            }
+            else
+            {
+                _error = err ?? "Registration failed";
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private string? Validate()
+    {
+        if (string.IsNullOrWhiteSpace(_model.FullName)) return "Full name is required.";
+        if (string.IsNullOrWhiteSpace(_model.Email)) return "Email is required.";
+        if (string.IsNullOrWhiteSpace(_model.Password)) return "Password is required.";
+        if (_model.Password.Length < 6) return "Password must be at least 6 characters.";
+        if (_model.Password != _model.ConfirmPassword) return "Passwords do not match.";
+        return null;
+    }
+}

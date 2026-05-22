@@ -1,0 +1,192 @@
+﻿@page "/requests"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "SystemAdmin,Manager,FinanceAdmin")]
+@inject ApiClient Api
+@implements IDisposable
+
+<PageTitle>All Requests</PageTitle>
+
+<div class="page-heading">
+    <div>
+        <h1>All Sponsorship Requests</h1>
+        <p>Search the full workflow ledger by approval state.</p>
+    </div>
+    @if (_meta != null)
+    {
+        <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small">@_meta.TotalCount total</MudChip>
+    }
+</div>
+
+<MudPaper Class="pa-4 mb-3 rich-panel" Elevation="0">
+    <MudGrid>
+        <MudItem xs="12" md="4">
+@*             <MudSelect T="string" Label="Status" Value="@_status" ValueChanged="OnStatusChanged" Variant="Variant.Outlined" Dense="true">
+                <MudSelectItem T="string" Value="@string.Empty">All Statuses</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Draft")">Draft</MudSelectItem>
+                <MudSelectItem T="string" Value="@("PendingManagerApproval")">Pending Manager</MudSelectItem>
+                <MudSelectItem T="string" Value="@("PendingFinanceReview")">Pending Finance</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Approved")">Approved</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Rejected")">Rejected</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Cancelled")">Cancelled</MudSelectItem>
+            </MudSelect> *@
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@if (_loading)
+{
+    <MudPaper Class="pa-4 rich-panel" Elevation="0">
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+    </MudPaper>
+}
+else if (!string.IsNullOrWhiteSpace(_error))
+{
+    <MudAlert Severity="Severity.Error" Variant="Variant.Filled">@_error</MudAlert>
+}
+else if (_items == null || _items.Count == 0)
+{
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">No requests found.</MudAlert>
+}
+else
+{
+    @if (_meta != null)
+    {
+        <MudText Typo="Typo.body2" Class="text-muted mb-2">Showing @_items.Count of @_meta.TotalCount requests.</MudText>
+    }
+
+    <MudPaper Class="pa-4 rich-panel" Elevation="0">
+        <MudTable Items="_items" Hover="true" Dense="true" Elevation="0" Class="rich-table">
+            <HeaderContent>
+                <MudTh>Number</MudTh>
+                <MudTh>Title</MudTh>
+                <MudTh>Requestor</MudTh>
+                <MudTh>Type</MudTh>
+                <MudTh>Amount</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh>Created</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Number">@context.RequestNumber</MudTd>
+                <MudTd DataLabel="Title">@context.Title</MudTd>
+                <MudTd DataLabel="Requestor">@context.RequestorName</MudTd>
+                <MudTd DataLabel="Type">@context.SponsorshipTypeName</MudTd>
+                <MudTd DataLabel="Amount">@context.RequestedAmount.ToString("N2")</MudTd>
+                <MudTd DataLabel="Status"><StatusBadge Status="@context.Status" /></MudTd>
+                <MudTd DataLabel="Created">@context.CreatedAt.ToLocalTime().ToString("g")</MudTd>
+                <MudTd DataLabel="Actions" Class="text-end">
+                    <MudButton Href="@($"/requests/{context.Id}")" Variant="Variant.Text" Color="Color.Primary" Size="Size.Small" EndIcon="@Icons.Material.Filled.ArrowForward">View</MudButton>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+
+    @if (_meta != null && _meta.TotalPages > 1)
+    {
+        <div class="d-flex align-items-center gap-2 mt-3">
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Disabled="@(!_meta.HasPrevious)" OnClick="Prev" StartIcon="@Icons.Material.Filled.ChevronLeft">Previous</MudButton>
+            <MudChip T="string" Variant="Variant.Outlined">Page @_meta.CurrentPage / @_meta.TotalPages</MudChip>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Disabled="@(!_meta.HasNext)" OnClick="Next" EndIcon="@Icons.Material.Filled.ChevronRight">Next</MudButton>
+        </div>
+    }
+}
+
+@code {
+    private List<SponsorshipRequestSummaryDto>? _items;
+    private PaginationMeta? _meta;
+    private bool _loading = true;
+    private string? _error;
+    private int _page = 1;
+    private string _status = string.Empty;
+
+    private CancellationTokenSource? _cts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Load();
+    }
+
+    private async Task OnStatusChanged(string value)
+    {
+        _status = value ?? string.Empty;
+        _page = 1;
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        // Cancel any previous in-flight call
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = new CancellationTokenSource();
+        var token = _cts.Token;
+
+        _loading = true;
+        _error = null;
+        StateHasChanged();
+
+        try
+        {
+            var url = $"/api/SponsorshipRequests?page={_page}&pageSize=10";
+            if (!string.IsNullOrEmpty(_status))
+            {
+                url += $"&status={Uri.EscapeDataString(_status)}";
+            }
+
+            var res = await Api.GetAsync<List<SponsorshipRequestSummaryDto>>(url, token);
+
+            if (token.IsCancellationRequested) return;
+
+            if (res?.Success == true)
+            {
+                _items = res.Data ?? new();
+                _meta = res.Pagination;
+            }
+            else
+            {
+                _items = new();
+                _meta = null;
+                _error = res?.Message ?? "Unable to load requests.";
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // expected when user navigates or refilters
+        }
+        catch (Exception ex)
+        {
+            _items = new();
+            _meta = null;
+            _error = $"Error loading requests: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task Prev()
+    {
+        if (_page > 1)
+        {
+            _page--;
+            await Load();
+        }
+    }
+
+    private async Task Next()
+    {
+        if (_meta?.HasNext == true)
+        {
+            _page++;
+            await Load();
+        }
+    }
+
+    public void Dispose()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
+    }
+}

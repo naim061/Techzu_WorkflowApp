@@ -1,0 +1,32 @@
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthStateProvider
+
+@if (_isAuthenticated)
+{
+    <div class="alert alert-warning mt-3">
+        You are signed in, but your role does not have access to this page.
+    </div>
+    <a class="btn btn-outline-primary" href="/">Go to dashboard</a>
+}
+else if (_checking)
+{
+    <p class="p-3">Checking access...</p>
+}
+
+@code {
+    private bool _checking = true;
+    private bool _isAuthenticated;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthStateProvider.GetAuthenticationStateAsync();
+        _isAuthenticated = state.User.Identity?.IsAuthenticated == true;
+        _checking = false;
+
+        if (!_isAuthenticated)
+        {
+            var uri = Nav.ToBaseRelativePath(Nav.Uri);
+            Nav.NavigateTo($"/login?returnUrl={Uri.EscapeDataString("/" + uri)}", forceLoad: false);
+        }
+    }
+}

@@ -1,0 +1,188 @@
+@page "/admin/types"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "SystemAdmin")]
+@inject ApiClient Api
+
+<PageTitle>Sponsorship Types</PageTitle>
+
+<div class="page-heading">
+    <div>
+        <h1>Sponsorship Types</h1>
+        <p>Maintain the selectable sponsorship categories used by requestors.</p>
+    </div>
+    <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small">@_items.Count total</MudChip>
+</div>
+
+<MudPaper Class="pa-4 mb-3 rich-panel" Elevation="0">
+        <MudText Typo="Typo.h6" Class="mb-3">@(_editing == null ? "Add Type" : $"Edit {_editing.Name}")</MudText>
+        @if (_busy)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-3" />
+        }
+        <EditForm Model="_form" OnValidSubmit="Save" FormName="typeForm">
+            <DataAnnotationsValidator />
+            <div class="row g-2 align-items-start">
+                <div class="col-md-4">
+                    <label class="form-label">Name</label>
+                    <InputText class="form-control" @bind-Value="_form.Name" />
+                    <ValidationMessage For="@(() => _form.Name)" />
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Description</label>
+                    <InputText class="form-control" @bind-Value="_form.Description" />
+                    <ValidationMessage For="@(() => _form.Description)" />
+                </div>
+                <div class="col-md-1 pt-md-4">
+                    <label class="form-check">
+                        <InputCheckbox class="form-check-input" @bind-Value="_form.IsActive" disabled="@(_editing == null)" />
+                        <span class="form-check-label">Active</span>
+                    </label>
+                </div>
+                <div class="col-md-2 pt-md-4">
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@_busy" StartIcon="@Icons.Material.Filled.Save">@(_editing == null ? "Add" : "Save")</MudButton>
+                    @if (_editing != null)
+                    {
+                        <MudButton ButtonType="ButtonType.Button" Variant="Variant.Outlined" Color="Color.Default" OnClick="CancelEdit" Class="ms-1" StartIcon="@Icons.Material.Filled.Close">Cancel</MudButton>
+                    }
+                </div>
+            </div>
+        </EditForm>
+        @if (!string.IsNullOrEmpty(_err))
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mt-3">@_err</MudAlert>
+        }
+        @if (!string.IsNullOrEmpty(_msg))
+        {
+            <MudAlert Severity="Severity.Success" Variant="Variant.Outlined" Class="mt-3">@_msg</MudAlert>
+        }
+</MudPaper>
+
+@if (_loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+}
+else if (_items.Count == 0)
+{
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">No sponsorship types found.</MudAlert>
+}
+else
+{
+    <MudPaper Class="pa-4 rich-panel" Elevation="0">
+        <MudTable Items="_items" Hover="true" Dense="true" Elevation="0" Class="rich-table">
+            <HeaderContent>
+                <MudTh>Id</MudTh>
+                <MudTh>Name</MudTh>
+                <MudTh>Description</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh>Created</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Id">@context.Id</MudTd>
+                <MudTd DataLabel="Name">@context.Name</MudTd>
+                <MudTd DataLabel="Description">@context.Description</MudTd>
+                <MudTd DataLabel="Status">
+                    <MudChip T="string" Color="@(context.IsActive ? Color.Success : Color.Default)" Size="Size.Small" Variant="Variant.Filled">
+                        @(context.IsActive ? "Active" : "Inactive")
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Created">@context.CreatedAt.ToLocalTime().ToString("d")</MudTd>
+                <MudTd DataLabel="Actions" Class="text-end">
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small" OnClick="@(() => Edit(context))" StartIcon="@Icons.Material.Filled.Edit">Edit</MudButton>
+                    <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" OnClick="@(() => Delete(context.Id))" Disabled="@_busy" StartIcon="@Icons.Material.Filled.Delete">Delete</MudButton>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+}
+
+@code {
+    private List<SponsorshipTypeDto> _items = new();
+    private bool _loading = true;
+    private bool _busy;
+    private string? _err;
+    private string? _msg;
+    private SponsorshipTypeDto? _editing;
+    private UpdateSponsorshipTypeDto _form = new();
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
+    {
+        _loading = true;
+        var res = await Api.GetAsync<List<SponsorshipTypeDto>>("/api/SponsorshipTypes?activeOnly=false");
+        _items = res?.Data ?? new();
+        _loading = false;
+    }
+
+    private void Edit(SponsorshipTypeDto type)
+    {
+        _editing = type;
+        _form = new UpdateSponsorshipTypeDto
+        {
+            Name = type.Name,
+            Description = type.Description,
+            IsActive = type.IsActive
+        };
+        _err = null;
+        _msg = null;
+    }
+
+    private void CancelEdit()
+    {
+        _editing = null;
+        _form = new UpdateSponsorshipTypeDto { IsActive = true };
+        _err = null;
+    }
+
+    private async Task Save()
+    {
+        _err = null;
+        _msg = null;
+        _busy = true;
+
+        ApiResponse<SponsorshipTypeDto>? res;
+        if (_editing == null)
+        {
+            res = await Api.PostAsync<SponsorshipTypeDto>("/api/SponsorshipTypes",
+                new CreateSponsorshipTypeDto { Name = _form.Name, Description = _form.Description });
+        }
+        else
+        {
+            res = await Api.PutAsync<SponsorshipTypeDto>($"/api/SponsorshipTypes/{_editing.Id}", _form);
+        }
+
+        if (res?.Success == true)
+        {
+            _msg = _editing == null ? "Type added." : "Type updated.";
+            CancelEdit();
+            await Load();
+        }
+        else
+        {
+            _err = res?.Message ?? "Save failed.";
+        }
+
+        _busy = false;
+    }
+
+    private async Task Delete(int id)
+    {
+        _err = null;
+        _msg = null;
+        _busy = true;
+
+        var res = await Api.DeleteAsync<object>($"/api/SponsorshipTypes/{id}");
+        if (res?.Success == true)
+        {
+            _msg = "Type deleted.";
+            await Load();
+        }
+        else
+        {
+            _err = res?.Message ?? "Delete failed.";
+        }
+
+        _busy = false;
+    }
+}

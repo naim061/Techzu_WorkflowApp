@@ -1,0 +1,39 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "SponsorshipWorkflow.Application/1.0.0": {
+        "dependencies": {
+          "SponsorshipWorkflow.Domain": "1.0.0"
+        },
+        "runtime": {
+          "SponsorshipWorkflow.Application.dll": {}
+        }
+      },
+      "SponsorshipWorkflow.Domain/1.0.0": {
+        "runtime": {
+          "SponsorshipWorkflow.Domain.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "SponsorshipWorkflow.Application/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "SponsorshipWorkflow.Domain/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

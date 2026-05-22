@@ -1,0 +1,23 @@
+@code {
+    [Parameter] public string Status { get; set; } = "";
+
+    private Color ChipColor => Status switch
+    {
+        "Draft" => Color.Default,
+        "PendingManagerApproval" => Color.Warning,
+        "PendingFinanceReview" => Color.Info,
+        "Approved" => Color.Success,
+        "Rejected" => Color.Error,
+        "Cancelled" => Color.Dark,
+        _ => Color.Default
+    };
+
+    private string Label => Status switch
+    {
+        "PendingManagerApproval" => "Pending Manager",
+        "PendingFinanceReview" => "Pending Finance",
+        _ => Status
+    };
+}
+
+<MudChip T="string" Color="@ChipColor" Variant="Variant.Filled" Size="Size.Small" Class="status-chip">@Label</MudChip>

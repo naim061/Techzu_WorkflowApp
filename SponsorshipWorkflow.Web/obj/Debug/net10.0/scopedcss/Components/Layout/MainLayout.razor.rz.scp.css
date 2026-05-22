@@ -1,0 +1,82 @@
+.app-shell[b-v42r7lrljl] {
+    min-height: 100vh;
+    background: #f4f7fb;
+}
+
+.app-drawer[b-v42r7lrljl] {
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.app-drawer[b-v42r7lrljl]  .mud-drawer-content {
+    align-items: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.app-bar[b-v42r7lrljl] {
+    border-bottom: 1px solid #d9e2ec;
+}
+
+.app-bar-title[b-v42r7lrljl] {
+    color: #1f2933;
+    font-weight: 700;
+}
+
+.main-content[b-v42r7lrljl] {
+    min-height: 100vh;
+}
+
+.content-wrap[b-v42r7lrljl] {
+    padding: 1.5rem;
+}
+
+.user-strip[b-v42r7lrljl] {
+    align-items: center;
+    display: flex;
+    gap: 0.65rem;
+    margin-right: 0.9rem;
+}
+
+.user-copy[b-v42r7lrljl] {
+    color: #1f2933;
+    line-height: 1.1;
+    min-width: 0;
+}
+
+.user-copy .mud-typography-caption[b-v42r7lrljl] {
+    color: #64748b;
+}
+
+@media (max-width: 720px) {
+    .content-wrap[b-v42r7lrljl] {
+        padding: 1rem;
+    }
+
+    .app-bar-title[b-v42r7lrljl],
+    .user-copy[b-v42r7lrljl],
+    .user-strip .mud-chip[b-v42r7lrljl] {
+        display: none;
+    }
+}
+
+#blazor-error-ui[b-v42r7lrljl] {
+    color-scheme: light only;
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+#blazor-error-ui .dismiss[b-v42r7lrljl] {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}

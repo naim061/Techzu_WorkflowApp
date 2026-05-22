@@ -1,0 +1,326 @@
+/* /Components/Layout/MainLayout.razor.rz.scp.css */
+.app-shell[b-v42r7lrljl] {
+    min-height: 100vh;
+    background: #f4f7fb;
+}
+
+.app-drawer[b-v42r7lrljl] {
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.app-drawer[b-v42r7lrljl]  .mud-drawer-content {
+    align-items: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.app-bar[b-v42r7lrljl] {
+    border-bottom: 1px solid #d9e2ec;
+}
+
+.app-bar-title[b-v42r7lrljl] {
+    color: #1f2933;
+    font-weight: 700;
+}
+
+.main-content[b-v42r7lrljl] {
+    min-height: 100vh;
+}
+
+.content-wrap[b-v42r7lrljl] {
+    padding: 1.5rem;
+}
+
+.user-strip[b-v42r7lrljl] {
+    align-items: center;
+    display: flex;
+    gap: 0.65rem;
+    margin-right: 0.9rem;
+}
+
+.user-copy[b-v42r7lrljl] {
+    color: #1f2933;
+    line-height: 1.1;
+    min-width: 0;
+}
+
+.user-copy .mud-typography-caption[b-v42r7lrljl] {
+    color: #64748b;
+}
+
+@media (max-width: 720px) {
+    .content-wrap[b-v42r7lrljl] {
+        padding: 1rem;
+    }
+
+    .app-bar-title[b-v42r7lrljl],
+    .user-copy[b-v42r7lrljl],
+    .user-strip .mud-chip[b-v42r7lrljl] {
+        display: none;
+    }
+}
+
+#blazor-error-ui[b-v42r7lrljl] {
+    color-scheme: light only;
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+#blazor-error-ui .dismiss[b-v42r7lrljl] {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}
+/* /Components/Layout/NavMenu.razor.rz.scp.css */
+.brand-panel[b-tsduwgayop] {
+    align-items: center;
+    background: linear-gradient(135deg, rgba(218, 127, 63, 0.18), rgba(23, 107, 135, 0.2));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    color: #ffffff;
+    display: flex;
+    gap: 0.75rem;
+    margin: 0.9rem;
+    padding: 0.8rem;
+    flex: 0 0 auto;
+}
+
+.brand-title[b-tsduwgayop] {
+    color: #ffffff;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.brand-subtitle[b-tsduwgayop] {
+    color: #afc2d4;
+}
+
+.drawer-divider[b-tsduwgayop] {
+    border-color: rgba(255, 255, 255, 0.12);
+    flex: 0 0 auto !important;
+    margin: 0 1rem 0.75rem;
+}
+
+.workflow-nav[b-tsduwgayop] {
+    flex: 0 0 auto !important;
+    padding: 0 0.7rem 1rem;
+}
+
+.workflow-nav[b-tsduwgayop]  .mud-nav-link {
+    border-radius: 6px;
+    color: #dce7f0;
+    height: 42px;
+    margin-bottom: 0.25rem;
+    padding-left: 0.75rem;
+    position: relative;
+    transition: background-color 120ms ease, color 120ms ease;
+}
+
+.workflow-nav[b-tsduwgayop]  .mud-nav-link:hover {
+    background: rgba(255, 255, 255, 0.09);
+    color: #ffffff;
+}
+
+.workflow-nav[b-tsduwgayop]  .mud-nav-link.active {
+    background: rgba(218, 127, 63, 0.18);
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.workflow-nav[b-tsduwgayop]  .mud-nav-link.active::before {
+    background: #da7f3f;
+    border-radius: 0 4px 4px 0;
+    content: "";
+    height: 24px;
+    left: 0;
+    position: absolute;
+    top: 9px;
+    width: 4px;
+}
+
+.workflow-nav[b-tsduwgayop]  .mud-nav-link.active .mud-nav-link-icon {
+    color: #da7f3f;
+}
+
+.workflow-nav[b-tsduwgayop]  .mud-nav-link-icon {
+    color: #afc2d4;
+    margin-right: 0.7rem;
+}
+
+.nav-section[b-tsduwgayop] {
+    color: #8fa6b9;
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 1;
+    padding: 0.65rem 0.85rem 0.45rem;
+}
+/* /Components/Layout/ReconnectModal.razor.rz.scp.css */
+.components-reconnect-first-attempt-visible[b-g0xist1vuv],
+.components-reconnect-repeated-attempt-visible[b-g0xist1vuv],
+.components-reconnect-failed-visible[b-g0xist1vuv],
+.components-pause-visible[b-g0xist1vuv],
+.components-resume-failed-visible[b-g0xist1vuv],
+.components-rejoining-animation[b-g0xist1vuv] {
+    display: none;
+}
+
+#components-reconnect-modal.components-reconnect-show .components-reconnect-first-attempt-visible[b-g0xist1vuv],
+#components-reconnect-modal.components-reconnect-show .components-rejoining-animation[b-g0xist1vuv],
+#components-reconnect-modal.components-reconnect-paused .components-pause-visible[b-g0xist1vuv],
+#components-reconnect-modal.components-reconnect-resume-failed .components-resume-failed-visible[b-g0xist1vuv],
+#components-reconnect-modal.components-reconnect-retrying[b-g0xist1vuv],
+#components-reconnect-modal.components-reconnect-retrying .components-reconnect-repeated-attempt-visible[b-g0xist1vuv],
+#components-reconnect-modal.components-reconnect-retrying .components-rejoining-animation[b-g0xist1vuv],
+#components-reconnect-modal.components-reconnect-failed[b-g0xist1vuv],
+#components-reconnect-modal.components-reconnect-failed .components-reconnect-failed-visible[b-g0xist1vuv] {
+    display: block;
+}
+
+
+#components-reconnect-modal[b-g0xist1vuv] {
+    background-color: white;
+    width: 20rem;
+    margin: 20vh auto;
+    padding: 2rem;
+    border: 0;
+    border-radius: 0.5rem;
+    box-shadow: 0 3px 6px 2px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transition: display 0.5s allow-discrete, overlay 0.5s allow-discrete;
+    animation: components-reconnect-modal-fadeOutOpacity-b-g0xist1vuv 0.5s both;
+    &[open]
+
+{
+    animation: components-reconnect-modal-slideUp-b-g0xist1vuv 1.5s cubic-bezier(.05, .89, .25, 1.02) 0.3s, components-reconnect-modal-fadeInOpacity-b-g0xist1vuv 0.5s ease-in-out 0.3s;
+    animation-fill-mode: both;
+}
+
+}
+
+#components-reconnect-modal[b-g0xist1vuv]::backdrop {
+    background-color: rgba(0, 0, 0, 0.4);
+    animation: components-reconnect-modal-fadeInOpacity-b-g0xist1vuv 0.5s ease-in-out;
+    opacity: 1;
+}
+
+@keyframes components-reconnect-modal-slideUp-b-g0xist1vuv {
+    0% {
+        transform: translateY(30px) scale(0.95);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
+
+@keyframes components-reconnect-modal-fadeInOpacity-b-g0xist1vuv {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes components-reconnect-modal-fadeOutOpacity-b-g0xist1vuv {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+.components-reconnect-container[b-g0xist1vuv] {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+#components-reconnect-modal p[b-g0xist1vuv] {
+    margin: 0;
+    text-align: center;
+}
+
+#components-reconnect-modal button[b-g0xist1vuv] {
+    border: 0;
+    background-color: #6b9ed2;
+    color: white;
+    padding: 4px 24px;
+    border-radius: 4px;
+}
+
+    #components-reconnect-modal button:hover[b-g0xist1vuv] {
+        background-color: #3b6ea2;
+    }
+
+    #components-reconnect-modal button:active[b-g0xist1vuv] {
+        background-color: #6b9ed2;
+    }
+
+.components-rejoining-animation[b-g0xist1vuv] {
+    position: relative;
+    width: 80px;
+    height: 80px;
+}
+
+    .components-rejoining-animation div[b-g0xist1vuv] {
+        position: absolute;
+        border: 3px solid #0087ff;
+        opacity: 1;
+        border-radius: 50%;
+        animation: components-rejoining-animation-b-g0xist1vuv 1.5s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+    }
+
+        .components-rejoining-animation div:nth-child(2)[b-g0xist1vuv] {
+            animation-delay: -0.5s;
+        }
+
+@keyframes components-rejoining-animation-b-g0xist1vuv {
+    0% {
+        top: 40px;
+        left: 40px;
+        width: 0;
+        height: 0;
+        opacity: 0;
+    }
+
+    4.9% {
+        top: 40px;
+        left: 40px;
+        width: 0;
+        height: 0;
+        opacity: 0;
+    }
+
+    5% {
+        top: 40px;
+        left: 40px;
+        width: 0;
+        height: 0;
+        opacity: 1;
+    }
+
+    100% {
+        top: 0px;
+        left: 0px;
+        width: 80px;
+        height: 80px;
+        opacity: 0;
+    }
+}
